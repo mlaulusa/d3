@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>US Population</title>
+</head>
+
+<body>
+
+    <svg class="chart"></svg>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.min.js"></script>
+    <script>
+        var height = 960,
+            barWidth = 20;
+
+        var chart = d3.select(".chart")
+            .attr("height", height);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        d3.csv('CSVExport.csv', function (d) {
+            if (d.Geographic_Area != "United States" && d.Geographic_Area != "Midwest" && d.Geographic_Area != "Northeast" && d.Geographic_Area != "West" && d.Geographic_Area != "South") {
+                return d;
+//                return {
+//                    '2010': +d['2010'],
+//                    Geographic_Area: d.Geographic_Area
+//                };
+            }
+        }, function (error, data) {
+
+//            y.domain([0, d3.max(function (d) {
+//                return d["2010"];
+//            })]);
+//
+//            chart.attr("width", barWidth * data.length);
+//
+//            chart.selectAll("g")
+//                .data(data)
+//                .enter().append("g")
+//                .attr("transform", function (d, i) {
+//                    return "translate(0," + i * barWidth + ")";
+//                })
+//                .attr("height", "0")
+//                .attr("width", barWidth - 1)
+//                .transition()
+//                .duration(1000)
+//                .attr("width", y);
+            console.log(data['2010']);
+
+        });
+    </script>
+</body>
+
+</html>

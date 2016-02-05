@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <title>NYC Causes of Death</title>
+    <style>
+        svg text {
+            fill: black;
+            font: 10px sans-serif;
+            text-anchor: end;
+        }
+    </style>
+</head>
+
+<body>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.min.js"></script>
+    <script>
+        var minRadius = 5,
+            maxRadius = 30,
+            margin = {
+                top: 15,
+                right: 30,
+                bottom: 15,
+                left: 20
+            },
+            outterHeight = 760,
+            outterWidth = 1060,
+            innerHeight = outterHeight - (margin.top + margin.bottom),
+            innerWidth = outterWidth - (margin.right + margin.left),
+            rScale = d3.scale.sqrt().range([minRadius, maxRadius]),
+            colorScale = d3.scale.ordinal().range(["rgba(255,119,170,.5)", "rgba(119,170,255,.5)"]).domain(["FEMALE", "MALE"]),
+            buttons = ["MALE", "FEMALE"];
+
+        var information = d3.select("body").append("svg")
+            .attr("width", outterWidth)
+            .attr("height", 50)
+            .append("text")
+            .attr("class", "information")
+            .attr("x", outterWidth / 2)
+            .attr("y", 25);
+
+        var buttons = d3.select("body").append("ul").selectAll("li")
+            .data(buttons)
+            .enter().append("li")
+            .style("list-style-type", "none")
+            .style("cursor", "pointer")
+            .style("display", "inline-block")
+            .style("margin", "0 20px")
+            .html(function (d) {
+                return d;
+            })
+            .on("click", function (d) {
+                d3.csv("NYC_Leading_Causes_of_Death.csv", function (data) {
+                    if (data.Sex == d && data.Year == "2010") {
+
+                        return {
+                            ethnicity: data.Ethnicity,
+                            sex: data.Sex,
+                            cause: data["Cause of Death"],
+                            count: +data.Count,
+                            percent: +data.Percent
+                        }
+                    }
+                }, render);
+            })
+
+        var svg = d3.select("body").append("svg")
+            .attr("width", outterWidth)
+            .attr("height", outterHeight);
+
+        var g = svg.append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var rect = svg.append("rect")
+            .attr("height", 10)
+            .attr("width", 20)
+            .style("fill", "steelblue")
+            .style("cursor", "pointer")
+            .on("click", function () {
+
+                d3.csv("NYC_Leading_Causes_of_Death.csv", processData, render);
+                rect.remove();
+            });
+
+        function render(error, data) {
+
+            if (!error) {
+                rScale.domain(d3.extent(data, function (d) {
+                    return d.percent;
+                }));
+
+                // bind data
+                var circle = g.selectAll("circle").data(data);
+
+                // create dom elements
+                circle.enter().append("circle");
+
+                // update dom elements varying attributes
+                circle
+                    .attr("id", function (d, i) {
+                        return "circle" + i;
+                    })
+                    .attr("height", 100)
+                    .attr("width", 100)
+                    .attr("fill", function (d) {
+                        return colorScale(d.sex);
+                    })
+                    .attr("r", "0")
+                    .attr("cx", "0")
+                    .attr("cy", "0")
+                    .transition()
+                    .delay(function (d, i) {
+                        return 10 * i;
+                    })
+                    .duration(1000)
+                    .attr("r", function (d) {
+                        return rScale(d.percent);
+                    })
+                    .attr("cx", function (d, i) {
+                        return Math.floor(Math.random() * (innerWidth - i) + i);
+                    })
+                    .attr("cy", function (d, i) {
+                        return Math.floor(Math.random() * (innerHeight - d.percent) + d.percent);
+                    });
+
+                // remove old dom elements
+                circle.exit().remove();
+
+                circle
+                    .on("mouseover", function (d, i) {
+                        information.text(d.sex + " " + d.ethnicity + " " + d.cause + " " + d.count);
+                        d3.select("#circle" + i)
+                            .attr("r", function (d) {
+                                return rScale(d.percent) * 2;
+                            });
+                    })
+                    .on("mouseout", function (d, i) {
+                        information.text("");
+                        d3.select("#circle" + i)
+                            .attr("r", function (d) {
+                                return rScale(d.percent);
+                            });
+                    });
+            }
+        };
+
+        function processData(data) {
+            if (data.Year === "2010") {
+
+                return {
+                    ethnicity: data.Ethnicity,
+                    sex: data.Sex,
+                    cause: data["Cause of Death"],
+                    count: +data.Count,
+                    percent: +data.Percent
+                }
+
+            }
+        };
+    </script>
+</body>
+
+</html>
