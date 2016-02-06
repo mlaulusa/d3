@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title>Wind Power by Country</title>
+</head>
+
+<body>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.min.js"></script>
+    <script>
+        var margin = {
+                top: 10,
+                right: 10,
+                bottom: 10,
+                left: 10
+            },
+            outterHeight = 800,
+            outterWidth = 900,
+            barPadding = .2,
+            innerHeight = outterHeight - (margin.top + margin.bottom),
+            innerWidth = outterWidth - (margin.right + margin.left),
+            yColumn = "Quantity",
+            xColumn = "Country or Area",
+            xScale = d3.scale.ordinal().rangeBands([0, innerWidth], barPadding),
+            yScale = d3.scale.linear().range([innerHeight, 0]),
+            colorScale = d3.scale.category10();
+
+        var svg = d3.select("body").append("svg")
+            .attr("height", outterHeight)
+            .attr("width", outterWidth);
+
+        var group = svg.append("g")
+            .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+        var xAxisG = group.append("g")
+            .attr("class", "x axis")
+            .attr("transform", "translate(0," + innerHeight + ")");
+
+        var yAxisG = group.append("g")
+            .attr("class", "y axis");
+
+        var yAxis = d3.svg.axis().scale(yScale).orient("left")
+            .ticks(10)
+            .outerTickSize(0);
+
+        var xAxis = d3.svg.axis().scale(xScale).orient("bottom");
+
+        function render(error, data) {
+
+            console.log(data);
+
+            yScale.domain(d3.extent(data, function (d) {
+                return d[yColumn];
+            }));
+
+            colorScale.domain(data.map(function (d) {
+                return d[xColumn];
+            }));
+
+            xAxisG
+                .call(xAxis)
+                .selectAll("text")
+                .attr("dx", "-.8em")
+                .attr("dy", "1em")
+                .attr("transform", "rotate(-20)");
+
+            yAxisG.call(yAxis);
+
+            var bars = group.selectAll("rect").data(data);
+
+            bars
+                .enter().append("rect")
+                .attr("width", xScale.rangeBand());
+
+            bars
+                .attr("x", function (d) {
+                    return xScale(d[xColumn]);
+                })
+                .attr("y", function (d) {
+                    return yScale(d[yColumn]);
+                })
+                .attr("height", function (d) {
+                    return innerHeight - yScale(d[yColumn]);
+                })
+                .attr("fill", function (d) {
+                    return colorScale(d[xColumn]);
+                });
+
+            bars.exit().remove();
+
+        };
+
+        function processData(data) {
+            if (data.Year === "2013") {
+                d[xColumn] = data[xColumn];
+                d[yColumn] = +data[yColumn];
+                return d;
+            }
+        }
+
+        d3.csv("data.csv", processData, render);
+    </script>
+</body>
+
+</html>

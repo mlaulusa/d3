@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>US Population</title>
+    <style>
+        .chart rect {
+            fill: #10573b;
+        }
+    </style>
+</head>
+
+<body>
+
+    <svg class="chart"></svg>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.js"></script>
+    <script>
+        var height = 960,
+            barWidth = 20;
+
+        var chart = d3.select(".chart")
+            .attr("height", height);
+
+        var y = d3.scale.linear()
+            .range([height, 0]);
+
+        d3.csv('CSVExport.csv', function (d) {
+            if (d.Geographic_Area != "United States" && d.Geographic_Area != "Midwest" && d.Geographic_Area != "Northeast" && d.Geographic_Area != "West" && d.Geographic_Area != "South") {
+                return {
+                    '2010': parseFloat(d['2010'].replace(/[^\d\.\-\ ]/g, '')),
+                    Geographic_Area: d.Geographic_Area
+                };
+            }
+        }, function (error, data) {
+
+            y.domain([0, d3.max(data, function (d) {
+                return d["2010"];
+            })]);
+
+            chart.attr("width", barWidth * data.length);
+
+            var bar = chart.selectAll("g")
+                .data(data)
+                .enter().append("g")
+                .attr("transform", function (d, i) {
+                    return "translate(" + i * barWidth + ",0)";
+                })
+
+            bar.append("rect")
+                .attr("height", height)
+                .attr("width", barWidth - 1)
+                .attr("y", height)
+                .transition()
+                .duration(1000)
+                .delay(function (d, i) {
+                    return (i/2) * 100;
+                })
+                .attr("y", function (d) {
+                    return y(d['2010']);
+                });
+
+            //            bar.append("text")
+            //                .attr("y", function (d) {
+            //                    return y(d['2010']) - 8;
+            //                })
+            //                .attr("text-anchor", "middle")
+            //                .transition()
+            //                .delay(1000)
+            //                .duration(3000)
+            //                .style("fill", "black")
+            //                .text(function (d) {
+            //                    return d['2010'];
+            //                });
+
+            console.log(data);
+
+        });
+    </script>
+</body>
+
+</html>
