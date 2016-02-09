@@ -31,6 +31,11 @@ var margin = {
     .y(function (d) {
         return yScale(d[column.quantity]);
     }),
+    tooltip = svg.append("g").append("rect")
+    .attr("height", 30)
+    .attr("width", 30)
+    .attr("class", "tooltip")
+    .style("fill", "rgba(0, 0, 0, 0)"),
     circle = function (data) {
         data.forEach(function (value, index, array) {
             value.values.forEach(function (v, i, a) {
@@ -45,18 +50,26 @@ var margin = {
                             .attr("r", 5);
                         d3.selectAll("#" + v[column.country].split(" ").join("_"))
                             .attr("stroke-width", 3);
-                        console.log(v[column.country].split(" ").join("_"));
+                        tooltip
+                            .attr("x", d3.event.pageX)
+                            .attr("y", d3.event.pageY)
+                            .transition()
+                            .style("fill", "rgba(40, 40, 40, .7)");
+                    
                     })
                     .on("mouseleave", function () {
                         d3.selectAll("." + v[column.country].split(" ").join("_"))
                             .attr("r", 3);
                         d3.selectAll("#" + v[column.country].split(" ").join("_"))
                             .attr("stroke-width", 1.5);
+                        tooltip
+                            .transition()
+                            .style("fill", "rgba(0, 0, 0, 0)");
                     });
             });
         });
-    };
-formatDate = d3.time.format("%Y").parse;
+    },
+    formatDate = d3.time.format("%Y").parse;
 
 function processData(data, i, a, b) {
 
@@ -89,31 +102,33 @@ function render(error, data) {
         .attr("transform", "translate(" + margin.left + "," + (margin.top) + ")")
         .call(yAxis);
 
-    var nestedData = d3.nest()
+    var data = d3.nest()
         .key(function (d) {
             return d[column.country];
         })
         .entries(data);
-    
-    var n = nestedData.filter(function(val, ind, arr){
+
+    var data = data.filter(function (val, ind, arr) {
         var check = false;
-        val.values.forEach(function(v, i, a){
-            if(v[column.quantity] > 10000){
+        val.values.forEach(function (v, i, a) {
+            if (v[column.quantity] > 10000) {
                 check = true;
             };
         });
         return check;
     });
-    
-    console.log(n);
 
     var countries = chart.selectAll("g")
-        .data(nestedData);
+        .data(data);
 
     countries
         .enter()
         .append("g")
         .attr("class", "country");
+
+    countries
+        .exit()
+        .remove();
 
     countries
         .append("path")
@@ -129,11 +144,7 @@ function render(error, data) {
         })
         .attr("fill", "none");
 
-    circle(nestedData);
-
-    countries
-        .exit()
-        .remove();
+    circle(data);
 
 };
 
