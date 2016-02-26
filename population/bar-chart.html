@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<title>US Population</title>
+	<style>
+		.axis line {
+			fill: none;
+			stroke: black;
+			shape-rendering: crispEdges;
+			stroke-width: .2em;
+		}
+		
+		.axis path {
+			stroke: black;
+		}
+		
+		.line {
+			fill: none;
+			stroke: steelblue;
+			stroke-width: 1.5px;
+		}
+		
+		svg {
+			margin: 40px;
+		}
+		
+		body {
+			font-size: .75em;
+		}
+	</style>
+</head>
+
+<body>
+
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.14/d3.min.js"></script>
+	<script>
+		var margin = {
+				top: 30,
+				right: 90,
+				bottom: 70,
+				left: 70
+			},
+			height = 960,
+			width = 800,
+			xScale = d3.scale.linear().range([0, width]),
+			yScale = d3.scale.linear().range([height, 0]),
+			xAxis = d3.svg.axis().scale(xScale).orient("bottom").ticks(5),
+			yAxis = d3.svg.axis().scale(yScale).orient("left"),
+			color = d3.scale.category20();
+
+		var svg = d3.select("body").append("svg")
+			.attr("height", height + margin.top + margin.bottom)
+			.attr("width", width + margin.right + margin.left);
+
+		var g = svg.append("g")
+			.attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+		var line = d3.svg.line()
+			.x(function (d) {
+				return xScale(d.date);
+			})
+			.y(function (d) {
+				return yScale(d.population);
+			})
+			.interpolate("linear");
+
+		function processData(data) {
+
+			if (data["Geographic_Area"] != "United States" && data["Geographic_Area"] != "West" && data["Geographic_Area"] != "South" && data["Geographic_Area"] != "Northeast" && data["Geographic_Area"] != "Midwest") {
+
+				return {
+					area: data["Geographic_Area"],
+					values: [{
+						date: 2010,
+						population: +data["2010"].replace(/[^\d\.\-\ ]/g, '')
+					}, {
+						date: 2011,
+						population: +data["2011"].replace(/[^\d\.\-\ ]/g, '')
+					}, {
+						date: 2012,
+						population: +data["2012"].replace(/[^\d\.\-\ ]/g, '')
+					}, {
+						date: 2013,
+						population: +data["2013"].replace(/[^\d\.\-\ ]/g, '')
+					}, {
+						date: 2014,
+						population: +data["2014"].replace(/[^\d\.\-\ ]/g, '')
+					}, {
+						date: 2015,
+						population: +data["2015"].replace(/[^\d\.\-\ ]/g, '')
+					}]
+				}
+			}
+
+		};
+
+		function render(error, d) {
+
+			if (error) throw error;
+
+			var data = [];
+
+			d.forEach(function (v, i, a) {
+				var area = v.area;
+				var arr = this;
+				v.values.forEach(function (value, index, array) {
+					if (value.population < 1000000) {
+
+						arr.push({
+							area: area,
+							date: value.date,
+							population: value.population
+						});
+					}
+
+				});
+			}, data);
+
+			color.domain(data.map(function (d) {
+				return d.area;
+			}));
+			xScale.domain(d3.extent(data, function (d) {
+				return d.date;
+			}));
+			yScale.domain(d3.extent(data, function (d) {
+				return d.population;
+			}));
+
+			g.append("g")
+				.attr("class", "x axis")
+				.attr("transform", "translate (0," + height + ")")
+				.call(xAxis);
+
+			g.append("g")
+				.attr("class", "y axis")
+				.call(yAxis);
+
+			var nestedData = d3.nest()
+				.key(function (d) {
+					return d.area;
+				})
+				.entries(data);
+
+			nestedData.forEach(function (d, i) {
+				g.append('svg:path')
+					.attr('d', line(d.values))
+					.attr('stroke', color(d.area))
+					.attr('stroke-width', .8)
+					.attr('fill', 'none');
+			});
+
+			//			g.append("path")
+			//				.datum(data)
+			//				.attr("class", "line")
+			//				.attr("d", line);
+
+			console.log(data);
+
+		};
+
+		d3.csv("CSVExport.csv", processData, render);
+	</script>
+</body>
+
+</html>
